@@ -1,0 +1,40 @@
+[
+  {
+    "id": "product_1_razer",
+    "category": "Electronics",
+    "link": "https://www.amazon.com/Razer-Kraken-Kitty-Wireless-Headset/dp/B0CCWDJ6GF/ref=sr_1_2?dib=eyJ2IjoiMSJ9.WxApTmROK8kkxfqXgkfW9Ot9oO-m_xtyUf3HvJKi3P1I3VY1I73f6NShClwlj66HQelxD7A0w9c5vi82C38fH_he0PhMAl2ChN5vK10AcbvHZu3TGvSCi2ZkeYfnJPAK3En9EVWaA-VIICDFWVh5ONunWtD7iIVu4AK0C_ecZNS-jKbaX9cuucwzTkOnE4vQghGdDTOS67vYmuIKVdHoh3otQ9yN2QB9eDyGMEqwHe8.pDwoqrrshqxvHReS6mlr3GwhK4AwSN83MbPOpH_XSvM&dib_tag=se&hvadid=409994666855&hvdev=c&hvexpln=0&hvlocphy=9005929&hvnetw=g&hvocijid=13228950165106293982--&hvqmt=b&hvrand=13228950165106293982&hvtargid=kwd-2174840529486&hydadcr=17109_11235315&keywords=razer%2Bkraken%2Bkitty%2Bv2%2Bbt&mcid=9c00e543f5ef3f2ca4081c80e0eb37a8&qid=1764297769&sr=8-2&ufe=app_do%3Aamzn1.fos.9fe8cbfa-bf43-43d1-a707-3f4e65a4b666&th=1",
+    "name": "Razer Kraken Kitty V2 Pro Wired Gaming Headset",
+    "description": "Unleash your killer kitty style anywhere with the Razer Kraken Kitty V2 BT - a wireless Bluetooth headset for gaming and IRL streaming. Powered by Razer Chroma RGB, display your unique personality for all to see, as you take your passion to the next level with a full suite of upgraded features.",
+    "reviews": [
+      "This headset is everything I wanted and more. The Razer Kraken Kitty V2 BT is not just adorable with its glowing kitty ears and quartz pink color, it’s also super functional. It connects easily through Bluetooth, and I’ve had zero issues with lag or disconnects.",
+      "The detail of the cat ears with RGB Chroma lighting is simply delightful. Colors and effects can be customized, making them stand out in streams or video calls. The white finishes are sleek and feel sturdy.",
+      "The cat ears are super cute and the RGB lighting is bright."
+    ],
+    "real_image_path": "images/razer_real.jpg"
+  },
+  {
+    "id": "product_2_smeg",
+    "category": "Home & Kitchen",
+    "link":"https://www.amazon.com/Toaster-Presets-Function-Removable-TSF01CRUS/dp/B011SJYTI0/ref=sr_1_1?crid=3SRA10AI2IG8T&dib=eyJ2IjoiMSJ9.1cQS1LkNLqA2xagL0VG1F3K3es-RUglomU-iWVZrxzplfzbevX8i0JrfbhRGx12-Q4higaEzDZd1qcwNqsi0v3XFoXHSMFM7fIlxZW-r4TN9gNhGknOFEjxy1AXxntAmylviEU6AdntMnJU4C4-X1RKGAuyoZpG2WmrHindHacgMGx4gTx0wvDJAcHtCNY2ZfyUV1i0DDZS92Bm0GsZUJGuO1YeILVSoT3cVy3lGM8E.u-wR5_af9NSUMzt-VFyglhaS47QKtx3dwWo0v-0CpAE&dib_tag=se&keywords=Smeg%2B2-Slice%2BToaster%2C%2BCream&qid=1764298019&sprefix=smeg%2B2-slice%2Btoaster%2C%2Bcream%2Caps%2C194&sr=8-1&th=1",
+    "name": "SMEG 2 Slice Toaster with 6 Presets and Defrost Function and Removable Crumb Tray (Cream)",
+    "description": "Compact Footprint, Bold Impact – Measuring just 12 W x 8 D x 8 H, the SMEG TSF01 fits seamlessly on any countertop while standing out as a design icon. Harness the power of six distinct browning levels to achieve the perfect shade of toasty goodness. Operate your toaster with ease using the stylish chrome knob, boasting four convenient functions: Reheat, Defrost, Cancel, and Bagel. Our self-centering racks ensure uniform browning by securely holding your toast upright during the toasting process. Featuring a removable stainless-steel crumb tray for hassle-free maintenance, keeping your countertop pristine. 3 Pre-Set Functions – Reheat, Defrost, and Bagel modes offer versatility for all your breakfast favorites. Removable Stainless Steel Crumb Tray – Easy to clean and maintain, helping keep your countertop tidy. Non-Slip Feet for Stability – Anti-slip rubber feet ensure safe operation on any surface, even during busy mornings. Part of the SMEG Color Collection – Mix and match with SMEG’s Fab Fridge, ECF02 and EGF03 Espresso Machines, CJF11 Juicer, and more in matching or complementary colors. Made to Be Seen – Unlike ordinary toasters, the SMEG TSF01 is a functional showpiece designed to be displayed, not hidden.",
+    "reviews": [
+      "I love this toaster! For starters, it's beautiful to look at. It makes excellent toast (recommend between 3-4 setting for best toast). The slide out tray is easy to remove and clean. The unit and electric cord appear to be of very high quality. We chose cream colored paint and it's gorgeous, if one can say that about a toaster. My favorite feature of the toaster is the springiness of the pop-up mechanisms. When the toast is finished, the toast often flies above the toaster, much like in a cartoon! Most of the time, the toast lands back in the slot. While some may not like this, I absolutely find it adorable. This is my first SMEG toaster and doubt I will ever get another brand.",
+      "This toaster was the perfect Christmas gift for my husband! The color is a nice neutral cream, and the quality is very good. It’s lightweight, and it toasts bread and bagels very evenly. I’m very happy with this purchase!",
+      "This SMEG toaster is absolutely beautiful. Simple style but stunning at the same time. The cream color is so nice. Very easy to use. A no mess no fuss small appliance. Works well for me as I appreciate simplicity."
+    ],
+    "real_image_path": "images/smeg_real.jpg"
+  },
+  {
+    "id": "product_3_crocs",
+    "category": "Fashion",
+    "name": "Crocs Unisex-Adult Classic Clogs",
+    "description": "Crocs for Women and Men: The Crocs Classic Clogs are not only the most comfortable shoes for women and men but also easy to clean just using soap and water and allowing for a quick dry. Lightweight and Fun: Experience the ultimate in lightweight comfort with these Crocs for men and women. Their iconic Crocs comfort is perfect for all-day wear, and the ventilation ports enhance breathability while quickly shedding water and debris. Designed to Fit: These slip-on clogs are easy to take on and off, while being extremely durable. These Crocs even offer pivoting heel straps for a more secure fit. Shop with Confidence: Crocs products are backed by our 90-day manufacturer's warranty for high quality and authenticity. Terms and conditions apply.",
+    "reviews": [
+      "Absolute comfort and effortless style: I love them! These Crocs exceeded my expectations. They're incredibly comfortable, lightweight, and perfect for all-day wear. The material is durable, easy to clean, and quick-drying, making them ideal for both lounging at home and going out. The classic white design goes with everything and looks clean and modern. Plus, the back strap helps keep your foot secure, making them more comfortable to walk in. I love that they don't cause sweat or odor, even after wearing them for several hours. Definitely a worthwhile purchase if you're looking for comfort, durability, and casual style in a single shoe.",
+      "Had a difficult time trying to find white crocs in my granddaughter’s size. Apparently white is the in color among preteens. She loves them!",
+      "The holes allow me to put so many charms on them."
+    ],
+    "real_image_path": "images/crocs_real.jpg"
+  }
+]
