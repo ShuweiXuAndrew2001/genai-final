@@ -1,147 +1,209 @@
-# pipeline.py
-from typing import Dict, Any, List
-from prompts import PromptTemplates  # or 'prompts'
-from openai import OpenAI
-from dotenv import load_dotenv
-import google.generativeai as genai   # pip install google-generativeai
+"""Agentic workflow orchestrating Q2 analysis and Q3 image generation."""
+
+from __future__ import annotations
+
 import json
-import base64
-import os
-import uuid
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
-client = OpenAI()
-load_dotenv()   # this loads .env file
+from dotenv import load_dotenv
 
-# now you can read the key
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+from .analyzer import ProductAnalyzer
+from .image_api_call import apply_manual_prompt_fixes, call_image_model
 
-OUTPUT_DIR = "outputs"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_DATA_PATH = BASE_DIR / "data" / "products_data.json"
+DEFAULT_OUTPUT_DIR = BASE_DIR / "outputs"
 
 
-def call_llm(prompt: str) -> str:
-    response = client.responses.create(
-        model="gpt-5",
-        input=prompt
+@dataclass
+class WorkflowConfig:
+    data_path: Path = DEFAULT_DATA_PATH
+    output_dir: Path = DEFAULT_OUTPUT_DIR
+    generate_images: bool = True
+    image_models: List[str] = field(
+        default_factory=lambda: [
+            "openai:gpt-image-1",
+            "gemini:gemini-2.0-flash-image",
+        ]
     )
-    return response.output[0].content[0].text
-
-def call_openai_image(prompt: str, model_name: str) -> str:
-    result = client_openai.images.generate(
-        model=model_name,
-        prompt=prompt,
-        size="1024x1024"
-    )
-    image_b64 = result.data[0].b64_json
-    image_bytes = base64.b64decode(image_b64)
-
-    filename = f"openai_{model_name}_{uuid.uuid4().hex}.png"
-    filepath = os.path.join(OUTPUT_DIR, filename)
-    with open(filepath, "wb") as f:
-        f.write(image_bytes)
-    return filepath
-
-def call_gemini_image(prompt: str, model_name: str) -> str:
-    """
-    Example Gemini image call. Adjust to your actual Gemini API usage.
-    """
-    model = genai.GenerativeModel(model_name)
-    resp = model.generate_image(prompt=prompt)  # this line is pseudocode; check actual API
-    image_bytes = resp.image  # adapt based on real response
-
-    filename = f"gemini_{model_name}_{uuid.uuid4().hex}.png"
-    filepath = os.path.join(OUTPUT_DIR, filename)
-    with open(filepath, "wb") as f:
-        f.write(image_bytes)
-    return filepath
+    save_combined_results: bool = True
+    run_label: Optional[str] = None
 
 
-def call_image_model(prompt: str, model_name: str) -> str:
-    if model_name.startswith("openai:"):
-        openai_model = model_name.split(":", 1)[1]
-        return call_openai_image(prompt, openai_model)
+class AgenticWorkflow:
+    def __init__(
+        self,
+        config: WorkflowConfig,
+        analyzer_factory: Optional[Callable[[], ProductAnalyzer]] = None,
+    ) -> None:
+        self.config = config
+        self._analyzer_factory = analyzer_factory or ProductAnalyzer
+        self._run_dir: Optional[Path] = None
 
-    if model_name.startswith("gemini:"):
-        gemini_model = model_name.split(":", 1)[1]
-        return call_gemini_image(prompt, gemini_model)
+    def run(self) -> Dict[str, Any]:
+        self._prepare_logging()
+        logger.info("Starting agentic workflow")
+        products = self._load_products()
+        run_dir = self._prepare_run_directory()
 
+        analyzer = self._analyzer_factory()
+        q2_output_dir = run_dir / "q2_analysis"
+        q2_output_dir.mkdir(parents=True, exist_ok=True)
 
-def apply_manual_prompt_fixes(product: Dict[str, Any], prompt: str) -> str:
-    pid = product.get("id")
-
-    if pid == "product_1_razer":
-        prompt = prompt.replace(
-            "kitty ear design with the whole product in white accents",
-            "kitty ear design with the whole product in white accents, the ear contains quartz pink RGB light"
+        logger.info("Processing products through Q2 pipeline")
+        analyzer.process_products(products)
+        analysis_results = analyzer.analyze_all_products(
+            products,
+            output_dir=str(q2_output_dir),
         )
-        if "boomless and wireless" not in prompt:
-            prompt += " This product is boomless and wireless."
-    elif pid == "product_3_crocs":
-        prompt = prompt.replace("accents of brown", "")
-        prompt = prompt.replace(
-            "pivoting heel straps",
-            "pivoting heel straps with only the connected spot in black"
-        )
+        analysis_by_id = {res.get("product_id"): res for res in analysis_results}
 
-    return prompt
+        combined_products: List[Dict[str, Any]] = []
+        for product in products:
+            product_id = product.get("id")
+            analysis = analysis_by_id.get(product_id, {})
+            entry: Dict[str, Any] = {
+                "product_metadata": {
+                    "id": product_id,
+                    "name": product.get("name"),
+                    "category": product.get("category"),
+                    "source_link": product.get("link"),
+                    "real_image_path": self._resolve_path(product.get("real_image_path")),
+                },
+                "analysis": {
+                    "summary": analysis.get("summary"),
+                    "structured_data": analysis.get("structured_data"),
+                    "rag_analysis": analysis.get("rag_analysis"),
+                    "visual_attributes": analysis.get("visual_attributes"),
+                    "image_prompt": analysis.get("image_prompt"),
+                    "artifact_dir": str(q2_output_dir),
+                },
+            }
+
+            if self.config.generate_images:
+                entry["image_generation"] = self._generate_images_for_product(
+                    product,
+                    analysis,
+                    run_dir,
+                )
+
+            combined_products.append(entry)
+
+        final_payload = {
+            "metadata": {
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "run_label": self.config.run_label,
+                "config": {
+                    "data_path": str(self.config.data_path),
+                    "output_dir": str(run_dir),
+                    "generate_images": self.config.generate_images,
+                    "image_models": self.config.image_models,
+                },
+                "counts": {
+                    "products": len(products),
+                    "analysis_records": len(analysis_results),
+                },
+            },
+            "products": combined_products,
+        }
+
+        if self.config.save_combined_results:
+            output_path = run_dir / "agentic_results.json"
+            with output_path.open("w", encoding="utf-8") as f:
+                json.dump(final_payload, f, indent=2, ensure_ascii=False)
+            logger.info("Saved combined workflow results to %s", output_path)
+
+        return final_payload
+
+    def _load_products(self) -> List[Dict[str, Any]]:
+        if not self.config.data_path.exists():
+            raise FileNotFoundError(f"Product data not found at {self.config.data_path}")
+        with self.config.data_path.open("r", encoding="utf-8") as f:
+            products = json.load(f)
+        logger.info("Loaded %d products", len(products))
+        return products
+
+    def _prepare_run_directory(self) -> Path:
+        if self._run_dir is not None:
+            return self._run_dir
+        run_stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        if self.config.run_label:
+            run_name = f"{run_stamp}_{self.config.run_label}"
+        else:
+            run_name = run_stamp
+        run_dir = self.config.output_dir / "agentic_runs" / run_name
+        run_dir.mkdir(parents=True, exist_ok=True)
+        self._run_dir = run_dir
+        logger.info("Run directory prepared at %s", run_dir)
+        return run_dir
+
+    def _generate_images_for_product(
+        self,
+        product: Dict[str, Any],
+        analysis: Dict[str, Any],
+        run_dir: Path,
+    ) -> Dict[str, Any]:
+        prompt = (analysis or {}).get("image_prompt")
+        if not prompt:
+            return {
+                "prompt": None,
+                "generated": [],
+                "errors": ["Missing image prompt from Q2 analysis"],
+            }
+
+        adjusted_prompt = apply_manual_prompt_fixes(product, prompt)
+        results: List[Dict[str, Any]] = []
+        errors: List[str] = []
+        images_dir = run_dir / "images"
+        images_dir.mkdir(parents=True, exist_ok=True)
+
+        for model in self.config.image_models:
+            try:
+                image_path = call_image_model(adjusted_prompt, model)
+                results.append(
+                    {
+                        "model": model,
+                        "image_path": image_path,
+                    }
+                )
+            except Exception as exc:
+                errors.append(f"{model}: {exc}")
+                logger.warning("Image generation failed for %s: %s", model, exc)
+
+        comparison = {
+            "real_image_path": self._resolve_path(product.get("real_image_path")),
+            "generated": results,
+            "errors": errors,
+            "prompt": adjusted_prompt,
+        }
+        return comparison
+
+    def _resolve_path(self, relative_path: Optional[str]) -> Optional[str]:
+        if not relative_path:
+            return None
+        path = Path(relative_path)
+        if not path.is_absolute():
+            path = BASE_DIR / path
+        return str(path)
+
+    def _prepare_logging(self) -> None:
+        if not logging.getLogger().handlers:
+            logging.basicConfig(level=logging.INFO)
+        logger.setLevel(logging.INFO)
 
 
-def run_text_pipeline_for_product(product: Dict[str, Any]) -> Dict[str, Any]:
-    raw_text = product["description"] + "\n\n" + "\n".join(product["reviews"])
-    summ_prompt = PromptTemplates.get_summarization_prompt(raw_text)
-    analysis_summary = call_llm(summ_prompt)
-
-    attr_prompt = PromptTemplates.get_visual_attributes_prompt(
-        product_data=product,
-        analysis_summary=analysis_summary
-    )
-    attr_json_text = call_llm(attr_prompt)
-    visual_attributes = json.loads(attr_json_text)
-
-    final_prompt_prompt = PromptTemplates.get_image_prompt_prompt(
-        product_data=product,
-        visual_attributes=visual_attributes
-    )
-    diffusion_prompt = call_llm(final_prompt_prompt)
-    diffusion_prompt = apply_manual_prompt_fixes(product, diffusion_prompt)
-
-    return {
-        "analysis_summary": analysis_summary,
-        "visual_attributes": visual_attributes,
-        "diffusion_prompt": diffusion_prompt,
-    }
+def run_agentic_workflow(config: Optional[WorkflowConfig] = None) -> Dict[str, Any]:
+    workflow = AgenticWorkflow(config or WorkflowConfig())
+    return workflow.run()
 
 
-def run_image_generation_for_product(
-    product: Dict[str, Any],
-    models: List[str]
-) -> List[Dict[str, Any]]:
-    text_outputs = run_text_pipeline_for_product(product)
-    prompt = text_outputs["diffusion_prompt"]
-
-    results = []
-    for model_name in models:
-        image_path = call_image_model(prompt=prompt, model_name=model_name)
-
-        results.append({
-            "product_id": product["id"],
-            "product_name": product["name"],
-            "model": model_name,
-            "prompt": prompt,
-            "image_path": image_path,
-            "analysis_summary": text_outputs["analysis_summary"],
-            "visual_attributes": text_outputs["visual_attributes"],
-        })
-
-    return results
-
-
-def run_pipeline_for_all_products(products: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    all_results = []
-    models = ["openai:gpt-image-1", "gemini:gemini-2.0-flash-image"]
-
-    for product in products:
-        results = run_image_generation_for_product(product, models=models)
-        all_results.extend(results)
-
-    return all_results
+if __name__ == "__main__":
+    run_agentic_workflow()
